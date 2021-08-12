@@ -1,0 +1,15 @@
+﻿.action_descr.blkfrd * {
+	color: #000;
+}
+.action_descr.blkfrd table {
+	width: auto !important;
+	border-spacing: 2px !important;
+}
+.action_descr.blkfrd td {
+	width: 50% !important;
+	text-align: left;
+	padding: 0 10px 2px 0;
+}
+.item.stock[data-action_id="45"] .tooltip-inner table {
+	border-spacing:2px !important;
+}

@@ -1,0 +1,31 @@
+$(function(){
+	$(document).on('click','.cart_toggle', function () {
+		var p = $(this).closest('.pr-item');
+		var pid = p.attr('id');
+		state = p.attr('data-showproduct');
+		p.attr('data-showproduct', (state == 0) ? 1 : 0);
+		title = (state == 0) ? 'Свернуть': 'Раскрыть';
+		$(this).attr('title',title).tooltip('fixTitle').tooltip('setContent');
+	});
+	$(document).on('click','.sortBox .view > span', function () {
+		if(!$(this).hasClass('a')){
+			$('.sortBox .view > span').removeClass('a');
+			var list_type = $(this).attr('class');
+			$('#list_type').val(list_type);
+			$(this).addClass('a');
+			$('#page_loader').show();
+			$('#filterCatalogForm').submit();
+			$('#productPreview').html('');
+		}
+	});
+});
+function check_show_switcher() {
+	$('.pr-item').each(function () {
+		var t = $(this);
+		var id = t.attr('id');
+		var cont = $('#'+id+' .product_info');
+		if(cont.height() <= t.height()){
+			$('#'+id+' .hidder, #'+id+' .cart_toggle').hide();
+		}
+	});
+}

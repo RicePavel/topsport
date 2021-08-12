@@ -1,0 +1,746 @@
+var chk_tmr = null;
+//var marine = 'Предзаказ-21 MARINE';
+var marine = ['Предзаказ-21 SLEDEX','Предзаказ-21 LA Sleeve','Предзаказ-21 Garland'];
+var blkfrd = 'BLACK FRIDAY-19';
+//var zip_nasos_in_structure_id = '77';
+//var zip_nasos_brands = ['Skipper','SAM-Tech','SeaFlo'];
+$(function () {
+	$(document).on('click', '#selectAll', function () {
+		cart_select_all();
+		var chkArray = cart_recount_checked();
+		cart_update_select(chkArray);
+	});
+	$(document).on('change', '.cartNum .checkbox', function () {
+		var cnt = $('.checkbox').size();
+		var state = $('.checkbox:visible:checked').size();
+		var cart_cont = $('#cart_container');
+		if (state > 0) {
+			if (!cart_cont.hasClass('last_step')) {
+				$('.make-order-cont >div').removeClass('na');
+			}
+			if (state == cnt) {
+				$('#selectAll').prop('checked', true);
+			} else {
+				$('#selectAll').prop('checked', false);
+			}
+		} else {
+			$('.make-order-cont >div').addClass('na');
+			$('#selectAll').prop('checked', false);
+			$('#order_container').fadeOut('fast');
+			cart_cont.removeClass('last_step');
+		}
+		var chkArray = cart_recount_checked();
+		cart_update_select(chkArray);
+	});
+	$(document).on('click', '.delete-item', function (e) {
+		if (confirm('Удалить выделенные товары из корзины?')) {
+			var items = $('.cart_item .checkbox:visible:checked');
+			var chkArray = '';
+
+			items.each(function (i, e) {
+				id = $(this).attr('data-tid');
+				$('#cart_item_' + id).remove();
+				chkArray = chkArray + id + ';';
+			});
+			var cart_name = $('#cart_container').attr('data-cart_name');
+			incube_ajax('cart', 'json', 'del_from_cart', {
+				ids: chkArray,
+				'cart_name': cart_name
+			}, function (response) {
+				if (response['countcart'].count > 0) {
+					$('#cart_block a[data-cart_name]="'+cart_name+'" .summ').text(response['countcart'].total_price_str);
+					$('#cart_block a[data-cart_name]="'+cart_name+'" .cart_count').text(response['countcart'].count);
+					$('#cart_block').addClass('cart_block_active');
+					$('.make-order').addClass('na');
+					cart_recount_checked();
+				} else {
+					window.location.reload();
+				}
+			});
+		}
+	});
+	$(document).on('click', '.make-order', function (e) {
+		$('.cart_list_container').fadeOut();
+		$('.cart_sort,.delete-item').addClass('hide');
+		if (!$('.make-order').hasClass('na')) {
+			$('#order_container').fadeIn('fast');
+			$('.make-order').addClass('na');
+			$('html, body').stop().animate({
+				scrollTop: $('#order_container').position().top
+			}, 400);
+			$('#cart_container').addClass('last_step');
+		}
+	});
+	$(document).on('click', ".product_info span[data-action]", function (e) {
+		val = $(this).attr('data-action');
+		$('.filtr .field_line li[data-action="' + val + '"]').click();
+	});
+
+	var sel = false;
+	var selected_shop = $('#shop_id option:selected').val();
+	$('#shop_id').change(function () {
+		var val = parseInt(this.value);
+		$('#shop_address option').show();
+		if (val) {
+//					$(this).removeClass('err');
+			$('#shop_address option[data-shop-id!=' + val + ']').hide();
+			$('#shop_address option[value=""]').show();
+//					$('#shop_address option[data-shop-id=' + val + ']').eq(0).attr('selected', 'selected');
+		} else {
+//					$(this).addClass('err');
+		}
+	});
+	$('#shop_address').change(function () {
+		var val = parseInt(this.value);
+		if (val) {
+			$(this).removeClass('err');
+		} else {
+			$(this).addClass('err');
+		}
+	});
+	$(document).on('click', '.cart_sort span', function () {
+		var cat = $(this).attr('data-cat');
+		// $('#selectAll').prop("checked", false);
+		$('#cart_discount').addClass('hide');
+		// $('#cart_price_name').text("Цена");
+
+		if ($(this).hasClass('checked')) {
+			$(this).removeClass('checked');
+			$('.checkbox').attr('disabled', false);
+			$('.cart_item').show();
+		} else {
+			$('.cart_sort span').removeClass('checked');
+			$(this).addClass('checked');
+			$('.cart_item[data-cat="' + cat + '"]').show();
+			$('.cart_item[data-cat="' + cat + '"] .checkbox').attr('disabled', false);
+			$('.cart_item[data-cat!="' + cat + '"]').hide();
+			$('.cart_item[data-cat!="' + cat + '"] .checkbox').attr('disabled', true);
+		}
+		// cart_select_all();
+		cart_check_selected();
+		cart_recount_checked();
+	});
+	$(document).on('change', '#contr_id', function () {
+		$('.contr_check').html($('option:selected', this).attr('data-contr-bankcheck'));
+		$('.contr_corr').html($('option:selected', this).attr('data-contr-bankcorr'));
+	});
+	$(document).on('change', '#delivery_type', function () {
+		$(this).removeClass('err');
+		if (this.value == 3) {
+			$('.delivery_address').addClass('a')
+			$('#shop_address').attr('required', true);
+			$('.delivery_address_notice').removeClass('hide')
+		} else {
+			$('#shop_address').removeAttr('required');
+			$('.delivery_address_notice').addClass('hide')
+			$('.delivery_address').removeClass('a')
+		}
+	});
+	$('.cart_tovar_add,.cart_tovar_up,.cart_tovar_down,.stock_val').tooltip();
+	var src = location.search;
+	if (getURLParam(location.search, 'action')) {
+		var link = getURLParam(location.search, 'action');
+		$('.cart_sort span[data-cat="' + link + '"]').trigger('click');
+		$('#selectAll').trigger('click');
+	}
+	$(document).on('change', '.cart_tovar_count', function () {
+		cart_recount_checked();
+	});
+	$(document).on('click', '.cart_tovar_up,.cart_tovar_down', function () {
+		cart_recount_checked();
+	});
+
+	$(window).scroll(function () {
+		cart_check_scroll();
+	});
+	cart_check_scroll();
+	cart_check_selected();
+	cart_recount_checked();
+	set_action_total_sum_by_quantity();
+});
+
+function get_sel_tab() {
+	var tab = $('.cart_sort span.checked').attr('data-cat');
+	// var tab = (cat !== undefined && cat.indexOf('Предзаказ') > -1) ? cat : '';
+	return tab;
+}
+
+function get_sel_state() {
+	var cat = $('.cart_sort span.checked').attr('data-cat');
+	var state = (cat !== undefined && cat.indexOf('Предзаказ') > -1) ? 'on' : 'off';
+	return state;
+}
+
+function cart_recount_checked() {
+	var selectedTab = get_sel_tab();
+	var formatter = new Intl.NumberFormat('ru');
+	var cnt = 0, sum = 0, price_user = 0, eqprice = 0, eqprice_user = 0,
+		blkfrd_user = 0, isPreorder = 0, selectedEquip = 0, total_sum;
+		//, nasosprice = 0;
+	var chkArray = '';
+	$('.cart_item .checkbox:visible:checked').each(function () {
+		id = $(this).attr('data-tid');
+		cont = $('#cart_item_' + id);
+		count_val = ($('.cart-input-' + id).get(0)) ? $('.cart-input-' + id).val() : 0;
+		cnt += parseInt(count_val);
+		if (cont.attr('data-type_discount') != 0) {
+			sum += get_action_discount($('#cart_item_' + id))
+		} else {
+//			if (cont.attr('data-cat') == marine) {
+			if ($.inArray(cont.attr('data-cat'), marine) != -1) {
+				discount = get_preorder_price(cont);
+				sum += parseFloat(discount.sum);
+				total_sum += parseFloat(discount.total_sum);
+				$('.cartDiscount',cont).html((Math.round(discount.discount) + '%'));
+				$('.cartPrice .price_opt',cont).html(discount.price);
+				$('.cartTotal .price_opt',cont).html(discount.sum);
+			} else {
+				sum += parseInt(count_val) * parseFloat($('#cart_item_' + id).attr('data-price'));
+			}
+		}
+		price_user += parseInt(count_val) * parseFloat($('#cart_item_' + id).attr('data-price_user'));
+		chkArray = chkArray + id + ';';
+		if ($('#cart_item_' + id).attr('data-cat') == 'Экипировка') {
+			if (selectedEquip == 0) {
+				selectedEquip = 1;
+			}
+			eqprice += parseInt(count_val) * parseFloat($('#cart_item_' + id).attr('data-price'));
+			eqprice_user += parseInt(count_val) * parseFloat($('#cart_item_' + id).attr('data-price_user'));
+		}
+		if ($('#cart_item_' + id).attr('data-cat') == blkfrd) {
+			blkfrd_user += parseInt(count_val) * parseFloat($('#cart_item_' + id).attr('data-price_user'));
+		}
+//		if ($('#cart_item_' + id).attr('data-in_structure_id') == zip_nasos_in_structure_id && $.inArray($('#cart_item_' + id).attr('data-brand'),zip_nasos_brands) != -1) {
+//			nasosprice += parseInt(count_val) * parseFloat($('#cart_item_' + id).attr('data-price'));
+//		}
+	});
+	/*
+	if (nasosprice > 20000) {
+		$('#nasos').val(1);
+		$('#ftnasos').show();
+	} else {
+		$('#nasos').val(0);
+		$('#ftnasos').hide();
+	}
+	*/
+	cart_selected_types();
+	$('#cart_legenda .count').text(cnt);
+	$('#cart_legenda .summa .price_opt').text(formatter.format(sum));
+	$('#cart_legenda .price_opt .summa .price,#cart_legenda .summa .price_retail').text(formatter.format(price_user));
+//	$('#cart_legenda .str').text(response['countcart'].count_str);
+	var selected_discount = 0;
+	if (selectedTab !== undefined && selectedTab.indexOf('Предзаказ') > -1) {
+		selected_discount = get_preorder_discount(sum, selectedTab);
+//		console.log(sum);
+//		console.log(selected_discount);
+		isPreorder = 1;
+		if (selectedTab == 'Предзаказ-19 ABOM') {
+			$('.tableData .cartName').each(function () {
+				var t = $(this);
+				var state = (t.html().indexOf('Линз') > -1) ? 1 : 0;
+				if (state == 1) {
+					$('#preorder_notice').show();
+					return false;
+				}
+			});
+		}
+	}
+	if (selectedEquip == 1) {
+//		selected_discount = get_equip_discount(eqprice_user);
+		selected_discount = 25;
+//		console.log(selected_discount);
+		sum = eqprice_user;
+//		console.log(sum);
+		if (eqprice_user > 20000) {
+			if (eqprice_user < 30000) {
+				good_type = "футболку";
+			} else  {
+				good_type = "толстовку";
+			}
+			$('#ft span').html(good_type);
+//			$('#ft').show();
+		} else {
+//			$('#ft').hide();
+		}
+	}
+	/*
+	if (selectedTab !== undefined && selectedTab == blkfrd) {
+		selected_discount = get_blkfrd_discount(blkfrd_user);
+		sum = blkfrd_user;
+		$('#cart_legenda .summa .price_opt').text(formatter.format(Math.floor((sum / 100) * (100 - selected_discount))));
+	}
+	*/
+	var $discount = $('#cart_discount');
+	if (selected_discount > 0) {
+//		if (isPreorder == 1 && selectedTab != marine) {
+		if (isPreorder == 1 && $.inArray(selectedTab, marine) == -1) {
+			$('#cart_price_name').text("МРЦ");
+		}
+		$('#cart_legenda .discount .price_preorder').text(formatter.format(Math.floor(price_user * selected_discount / 100)));
+
+		if (sum > 0) {
+			$('#cart_price_proc').text(selected_discount + "%");
+		} else {
+			$('#cart_price_proc').text("");
+		}
+		$discount.removeClass('hide');
+		if (selectedTab == 'Экипировка' || selectedEquip == 1 || selectedTab == blkfrd) {
+			if ($('body').attr('data-state') == 'opt') {
+				$discount.removeClass('hide');
+			} else {
+				$discount.addClass('hide');
+			}
+		}
+	} else {
+		$discount.addClass('hide');
+		if (isPreorder == 1) {
+			$('#cart_price_name').text("Цена");
+		}
+	}
+	return chkArray;
+}
+
+function cart_selected_types() {
+	var types = [];
+	$('.cart_item .checkbox:visible:checked').each(function () {
+		types.push($('#cart_item_' + $(this).data('tid')).data('cat'));
+	});
+	var vals = Array.from(new Set(types));
+	if (vals.length > 1) {
+		$('.order_container .info span').html(vals.join(', '));
+		$('.order_container .info').show();
+	} else {
+		$('.order_container .info').hide();
+	}
+}
+
+function cart_check_selected() {
+	var state = $('.checkbox:visible:checked').size();
+	if (state > 0) {
+		$('.make-order-cont >div').removeClass('na');
+
+		var cnt_all = $('.checkbox:visible').size();
+		if (cnt_all == state) {
+			$('#selectAll').prop('checked', true);
+		}
+	} else {
+		$('.make-order-cont >div').addClass('na');
+	}
+}
+
+function cart_recount_total(id) {
+	var formatter = new Intl.NumberFormat('ru');
+	var cont = $('#cart_item_' + id);
+	var cnt = ($('.cart-input-' + id).get(0)) ? parseInt($('.cart-input-' + id).val()) : 0;
+	var price = parseFloat(cont.attr('data-price'));
+	var price_user = parseFloat(cont.attr('data-price_user'));
+	var sum = cnt * price;
+	if (cont.attr('data-type_discount') != 0) {
+		sum = get_action_discount($('#cart_item_' + id))
+	}
+	if (cont.attr('data-cat') == marine) {
+		var discount = get_preorder_price(cont);
+		sum = discount.sum;
+		$('#cart_item_' + id + ' .cartDiscount').text(Math.round(discount.discount) + '%');
+		$('#cart_item_' + id + ' .cartPrice').text(formatter.format(Math.round(discount.price)));
+	}
+	$('#total_' + id + ' .price_opt').text(formatter.format(sum));
+	$('#total_' + id + ' .price_retail').text(formatter.format(cnt * price_user));
+}
+
+function check_cart_form() {
+	var err = 0;
+	$('select[required]').removeClass('err').each(function () {
+		if (!this.value) {
+			err = 1;
+			$(this).addClass('err');
+		}
+	});
+	if (!err) {
+		cart.order_send();
+	}
+}
+
+function cart_check_scroll() {
+	var $cart = $('#cart_legenda');
+	var $cart_cont = $('#cart_container');
+	if ($(this).scrollTop() > 150) {
+		$cart.addClass('fixed');
+		$cart_cont.addClass('fixed');
+	} else {
+		$cart.removeClass("fixed");
+		$cart_cont.removeClass("fixed");
+	}
+}
+
+function cart_select_all() {
+	var state = $('#selectAll').prop("checked");
+	$(".checkbox:visible").prop('checked', state);
+	if (state == true) {
+		$('.make-order-cont >div').removeClass('na');
+	} else {
+		$('.make-order-cont >div').addClass('na');
+		$('#order_container').fadeOut('fast');
+		$('#cart_container').removeClass('last_step');
+	}
+}
+
+function cart_update_select(chkArray) {
+	clearTimeout(chk_tmr);
+	chk_tmr = setTimeout(function () {
+		incube_ajax('cart', 'json', 'cart_selected', {
+			'ids': chkArray,
+			'cart_name': $('#cart_container').attr('data-cart_name')
+		});
+	}, 1000);
+}
+
+function get_preorder_discount(price, selectedTab) {
+	var discount = 0;
+	switch (selectedTab) {
+		case marine:
+			var total_sum = 0, sum = 0, discount = 0;
+			$('.cart_item .checkbox:visible:checked').each(function () {
+				id = $(this).attr('data-tid');
+				var cont = $('#cart_item_' + id);
+				if (cont.attr('data-cat') == marine) {
+					var discounts = get_preorder_price(cont);
+					total_sum += discounts.total_sum;
+					sum += discounts.sum;
+				}
+			});
+			discount = Math.round(100 - sum / (total_sum / 100));
+			break;
+		case 'Предзаказ-21 FXR':
+			if (price < 500000) {
+				discount = 34;
+			} else {
+				if (price < 2000000) {
+					discount = 36;
+				} else {
+					if (price < 4500000) {
+						discount = 38;
+					} else {
+						if (price < 9000000) {
+							discount = 40;
+						} else {
+							discount = 42;
+						}
+					}
+				}
+			}
+			break;
+		case 'Предзаказ-21 SIXS':
+			if (price >= 200000 ) {
+				if (price < 300000) {
+					discount = 33;
+				} else {
+					if (price < 450000) {
+						discount = 35;
+					} else {
+						if (price < 600000) {
+							discount = 39;
+						} else {
+							discount = 42;
+						}
+					}
+				}
+			}
+			break;
+     
+		
+		case 'Предзаказ-21 JWR':
+			if (price < 500000) {
+				discount = 35;
+			} else {
+				if (price < 1000000) {
+					discount = 40;
+				} else {
+					discount = 45;
+				}
+			}
+			break;
+		case 'Предзаказ-21 Tobe':
+			if (price < 500000) {
+				discount = 35;
+			} else {
+				if (price < 1000000) {
+					discount = 37;
+				} else {
+					if (price < 1500000) {
+						discount = 40;
+					} else {
+						if (price < 2000000) {
+							discount = 42;
+						} else {
+							discount = 45;
+						}
+					}
+				}
+			}
+			break;
+		case 'Предзаказ-21 509':
+			if (price < 500000) {
+				discount = 32;
+			} else {
+				if (price < 1000000) {
+					discount = 34;
+				} else {
+					if (price < 2000000) {
+						discount = 36;
+					} else {
+						if (price < 4000000) {
+							discount = 38;
+						} else {
+							if (price < 6000000) {
+								discount = 40;
+							} else {
+								discount = 42;
+							}
+						}
+					}
+				}
+			}
+			break;
+		case 'Предзаказ-21 BCA':
+			if (price < 1000000) {
+				discount = 35;
+			} else {
+				if (price < 1500000) {
+					discount = 40;
+				} else {
+					discount = 45;
+				}
+			}
+			break;
+		case 'Предзаказ-21 SPY':
+			if (price < 100000) {
+				discount = 30;
+			} else {
+				if (price < 350000) {
+					discount = 35;
+				} else {
+					if (price < 700000) {
+						discount = 40;
+					} else {
+						if (price < 1000000) {
+							discount = 45;
+						} else {
+							discount = 50;
+						}
+					}
+				}
+			}
+			break;
+		case 'Предзаказ-20 Ogio II':
+			if (price < 150000) {
+				discount = 30;
+			} else {
+				if (price < 300000) {
+					discount = 35;
+				} else {
+					if (price < 500000) {
+						discount = 40;
+					} else {
+						discount = 45;
+					}
+				}
+			}
+			break;
+		case 'Предзаказ SPI 20 новинки':
+			if (price < 100000) {
+				discount = 35;
+			} else {
+				discount = 40;
+			}
+			break;
+		case 'Предзаказ-21 EVS':
+			if (price > 100000) {
+				discount = 40;
+			}
+			break;
+		case 'Предзаказ-21 SLEDEX':
+		case 'Предзаказ-21 LA Sleeve':
+		case 'Предзаказ-21 Garland':
+				discount = 40;
+			break;
+	}
+	return discount;
+}
+
+function set_action_total_sum_by_quantity() {
+	var formatter = new Intl.NumberFormat('ru');
+	$('.catalog_line_item[data-discount_from!="0"]').each(function (k, v) {
+		sum = get_action_discount($('#' + $(this).attr('id')));
+		$('.cartTotal .price_opt', $(this)).html(formatter.format(sum));
+	});
+}
+
+function get_action_discount(cont) {
+	var count = parseInt($('.cart_tovar_count', cont).val());
+	var price = Math.round(parseFloat(cont.attr('data-price')));
+	var price_user = Math.round(parseFloat(cont.attr('data-price_user')));
+	var sum = count * price;
+	var type_discount = cont.attr('data-type_discount');
+	var discount_from = cont.attr('data-discount_from');
+	var discount = 0, discount_percent = 0, entry = 0, discount_qty = 0, discount_price = 0, discount_sum = 0;
+	switch (type_discount) {
+		case "num":
+			for (i = 1; i <= count; i++) {
+				if (i % discount_from == 0) {
+					sum -= price;
+				}
+			}
+			break;
+		case "proc":
+			var art = $('.cartArticul', cont).html();
+			var discounts = cont.attr('data-art_cnt_perc').split(';');
+			$.each(discounts, function (k, v) {
+				discount = v.split(',');
+				discount_from = parseInt(discount[1]);
+				if (discount[0] == art && count >= discount_from) {
+					discount_percent = (100 - discount[2]) / 100;
+					entry = Math.floor(count / discount_from);
+					discount_qty = discount_from * entry;
+					discount_price = Math.round(price_user * discount_percent);
+					discount_sum = discount_qty * discount_price;
+					sum = ((count - discount_qty) * price) + discount_sum;
+					$('.price_opt', cont).html(sum);
+				}
+			});
+			break;
+	}
+	return sum;
+}
+
+function get_equip_discount(price) {
+	var discount = 0;
+	if (price < 200000) {
+		discount = 25;
+	} else {
+		if (price < 500000) {
+			discount = 27;
+		} else {
+			discount = 30;
+		}
+	}
+	return discount;
+}
+
+function get_blkfrd_discount(price) {
+	var discount = 0;
+	if (price < 25000) {
+		discount = 25;
+	} else {
+		if (price < 50000) {
+			discount = 30;
+		} else {
+			if (price < 100000) {
+				discount = 32;
+			} else {
+				if (price < 200000) {
+					discount = 34;
+				} else {
+					if (price < 300000) {
+						discount = 36;
+					} else {
+						if (price < 400000) {
+							discount = 38;
+						} else {
+							discount = 40;
+						}
+					}
+				}
+			}
+		}
+	}
+	return discount;
+}
+
+function get_preorder_price(cont) {
+	// return true;
+	//OLD
+//	var discount_step = [0, 100000, 400000, 800000, 1600000, 3200000];
+//	var discount_percent = [40, 45, 47, 50, 52, 55];
+	var discount_step = [0];
+	var discount_percent = [40];
+
+	var price_user = parseFloat(cont.attr('data-price_user'));
+	var total_sum = 0;
+	var qty = parseInt($('.cart_tovar_count', cont).val());
+	$('.cart_item[data-cat="' + marine + '"]').each(function () {
+		item_cont = $(this);
+		if ($('.checkbox', item_cont).is(':checked')) {
+			item_price = parseFloat(item_cont.attr('data-price_user'));// * (100 - discount_percent[0]) / 100);
+			item_qty = parseInt($('.cart_tovar_count', item_cont).val());
+			total_sum += item_qty * item_price;
+		}
+	});
+//	console.log(total_sum);
+	var rule = 0;
+	if (total_sum > discount_step[1]) {
+		rule = 1;
+	}
+	if (total_sum > discount_step[2]) {
+		rule = 2;
+	}
+	if (total_sum > discount_step[3]) {
+		rule = 3;
+	}
+	if (total_sum > discount_step[4]) {
+		rule = 4;
+	}
+	if (total_sum > discount_step[5]) {
+		rule = 5;
+	}
+	var proc = discount_percent[rule];
+	price = price_user * (100 - proc) / 100;
+	/*
+	switch (rule) {
+		case 0:
+			price = price_user * (100 - proc) / 100;
+			break;
+		case 1:
+			price = parseFloat(cont.attr('data-price_opt4'));
+			break;
+		case 2:
+		case 3:
+			calc = price_user * (100 - proc) / 100;
+			price = Math.max(parseFloat(cont.attr('data-price_opt5')), calc);
+			break;
+		case 4:
+		case 5:
+			calc = price_user * (100 - proc) / 100;
+			price = Math.max(parseFloat(cont.attr('data-price_opt6')), calc);
+			break;
+	}
+	*/
+	/*
+	var discount_step = [0, 300000, 800000, 2000000, 3500000];
+	var discount_percent = [45, 47, 50, 52, 55];
+
+	var price_user = parseFloat(cont.attr('data-price_user'));
+	var total_sum = 0;
+	var qty = parseInt($('.cart_tovar_count', cont).val());
+	$('.cart_item[data-cat="' + marine + '"]').each(function () {
+		item_cont = $(this);
+		if ($('.checkbox', item_cont).is(':checked')) {
+			item_price = parseFloat(item_cont.attr('data-price_user'));// * (100 - discount_percent[0]) / 100);
+			item_qty = parseInt($('.cart_tovar_count', item_cont).val());
+			total_sum += item_qty * item_price;
+		}
+	});
+	var rule = 0;
+	if (total_sum > discount_step[1]) {
+		rule = 1;
+	}
+	*/
+	var proc = discount_percent[rule];
+	price = price_user * (100 - proc) / 100;
+	var $return = [];
+	$return["total_sum"] = qty * price_user;
+	$return["sum"] = Math.round(qty * price);
+	$return["price"] = Math.round(price);
+	$return["discount"] = Math.round(100 - price / (price_user / 100));
+	return $return;
+}

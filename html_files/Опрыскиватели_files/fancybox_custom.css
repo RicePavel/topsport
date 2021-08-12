@@ -1,0 +1,47 @@
+.fancybox-container .prev,
+.fancybox-container .next {
+	width: 5%;
+	height: 100%;
+	border: none;
+	color: #666;
+	cursor: pointer;
+	padding: 0;
+	position: absolute;
+	background-color: #fff;
+}
+.fancybox-container .next {
+	right: 0;
+}
+.fancybox-container .prev {
+	left: 0;
+}
+.fancybox-content .fancybox-button--left::after,
+.fancybox-content .fancybox-button--right::after {
+	content: '';
+	position: absolute;
+	display: inline-block;
+	top: auto;
+	width: 66%;
+	height: 3.3%;
+	border-top: 4px solid currentColor;
+	border-right: 4px solid currentColor;
+	left: 0;
+	right: 0;
+	margin: 0 auto;
+	border-radius: 3px;
+}
+.fancybox-content .fancybox-button--right::after {
+	transform: rotate(45deg);
+	right: 15px;
+}
+.fancybox-content .fancybox-button--left::after {
+	transform: rotate(-135deg);
+	right: -20px;
+}
+.fancybox-infobar {
+	text-align: center;
+	right: 0;
+}
+.fancybox-thumbs__list a::before {
+	border: 5px solid rgba(255, 82, 104, 0.7);
+}

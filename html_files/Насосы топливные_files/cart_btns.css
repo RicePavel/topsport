@@ -1,0 +1,111 @@
+/**/
+
+.catalog_line_item .line_item_buttons .cart_tovar_up_down,
+.product_buttons .cart_tovar_up_down {
+	display: inline-block;
+	/* margin-right: 10px; */
+	/* margin-bottom: 5px; */
+	border: 1px solid #b3bac4;
+	border-radius: 0 2px 2px 0;
+	color: #211f1f;
+	font-size: 20px;
+	line-height: 22px;
+	text-align: center;
+	/*overflow: hidden;*/
+	font-weight: 700;
+}
+.catalog_line_item .line_item_buttons .cart_tovar_up_down {
+	height: 26px;
+}
+.cart_tovar_up_down {
+	position: relative;
+	font-size: 0;
+	vertical-align: middle;
+	height: 25px;
+	user-select: none;
+	-webkit-user-select: none;
+	-moz-user-select: none;
+	-ms-user-select: none;
+}
+
+.cart_tovar_up_down .cart_tovar_down,
+.cart_tovar_up_down .cart_tovar_up {
+	position: relative;
+	display: inline-block;
+	height: 25px;
+	width: 25px;
+	cursor: pointer;
+}
+
+.cart_tovar_up_down .cart_tovar_down {
+	/* line-height: 20px; */
+	border-right: 1px solid #b3bac4;
+}
+
+.cart_tovar_up {
+	border-left: 1px solid #b3bac4;
+}
+
+.cart_tovar_up_down .cart_tovar_count {
+	width: 45px;
+	border: none;
+	font-size: 17px;
+	height: auto;
+	text-align: center;
+	/* line-height: 22px; */
+}
+
+.cart_tovar_up_down .unit {
+	display: none;
+	height: 25px;
+	line-height: 25px;
+	font-size: 13px;
+	padding: 0 7px;
+	/* width: 35px; */
+	text-align: left;
+}
+
+.stock_val {
+	font-size: 11px;
+	line-height: 13px;
+	color: #00b068;
+	text-align: left;
+	display: inline-block;
+	margin:2px 10px 0 0;
+	white-space: nowrap;
+	cursor: help;
+}
+.stock_val > div {
+	background-image: url(/d/img/ico_stock_arrive_new.png?v=1);
+	background-repeat: no-repeat;
+	background-size: cover;
+	display: inline-block;
+	width: 15px;
+	height: 15px;
+	vertical-align: middle;
+	margin-right: 5px;
+}
+.stock_val.arrive {
+	color: #6e6e6e;
+}
+.stock_val.arrive > div {
+	background-position-x: -15px;
+}
+.stock_val.remote > div {
+	background-position-x: -30px;
+}
+.stock_val span {
+	font-weight: 600;
+}
+
+.cartQty .stock_val {
+	float: left;
+}
+.stock_val.nothave {
+	color: red;
+	float: none;
+	cursor: default;
+	margin: 0;
+	text-align: center;
+	display: block;
+}

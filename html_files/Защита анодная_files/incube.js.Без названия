@@ -1,0 +1,178 @@
+$(function () {
+	$.datepicker.regional['ru'] = {
+		closeText: 'Закрыть',
+		prevText: '&#x3C;Пред',
+		nextText: 'След&#x3E;',
+		currentText: 'Сегодня',
+		monthNames: ['Январь', 'Февраль', 'Март', 'Апрель', 'Май', 'Июнь',
+			'Июль', 'Август', 'Сентябрь', 'Октябрь', 'Ноябрь', 'Декабрь'],
+		monthNamesShort: ['Янв', 'Фев', 'Мар', 'Апр', 'Май', 'Июн',
+			'Июл', 'Авг', 'Сен', 'Окт', 'Ноя', 'Дек'],
+		dayNames: ['воскресенье', 'понедельник', 'вторник', 'среда', 'четверг', 'пятница', 'суббота'],
+		dayNamesShort: ['вск', 'пнд', 'втр', 'срд', 'чтв', 'птн', 'сбт'],
+		dayNamesMin: ['Вс', 'Пн', 'Вт', 'Ср', 'Чт', 'Пт', 'Сб'],
+		weekHeader: 'Нед',
+		dateFormat: 'dd.mm.yy',
+		firstDay: 1,
+		isRTL: false,
+		showMonthAfterYear: false,
+		yearSuffix: ''
+	};
+
+	$.datepicker.setDefaults($.datepicker.regional['ru']);
+	var inp_files = $('.ajax_claim input[type="file"]');
+	$('.ajax_claim input[type="file"]').hide();
+	inp_files.each(function (ind, el) {
+		$(el).closest('.field_line').append('<div class="file_box"><span class="file_name">Файл не выбран</span><span class="for_file">Выберите файл</span> </div>');
+	});
+
+	var minYear = (new Date()).getFullYear() - 18;
+	$('a.fancy').fancybox({
+		helpers: {
+			toggler: true
+		}
+	});
+
+	$('input.claim_date').datepicker({
+		"changeMonth": true,
+		"changeYear": true,
+		"yearRange": '1950:' + minYear
+	}).inputmask("dd.mm.yyyy");
+	$('input.claim_phone,input.phone').inputmask("+7(999)999-99-99");
+
+//Обработчик для вызова всплывающей формы.
+//Пример: <a href="/" class="show_form" cid="1">Заказать звонок</a>
+//cid - это id заявки
+	$(document).on('click', '.show_form', function (e) {
+		e.preventDefault();
+		e.stopPropagation();
+		var cid = $(this).attr('cid');
+		claim_form_open(cid);
+	});
+
+	$(document).on('submit', "#ajax_form", function (e) {
+		e.preventDefault();
+		incube_file_ajax('claim', 'json', 'send_form', new FormData($(this)[0]), function (data) {
+			var current_form = $('#ajax_claim_' + data.pid);
+			if (data.flag == 'ok') {
+				current_form.find('.suc_text').empty();
+				current_form.find('.suc_text').html(data.claim.descr);
+				current_form.find('.cf_ok').fadeIn();
+				current_form.find('.form_content').hide();
+			} else {
+				current_form.find('.err_text').empty();
+				if (data.error[0]) {
+					current_form.find('.err_text').html(data.error[0]);
+					current_form.find('.claim_input').removeClass('inp_error');
+					for (var key in data.error_fields) {
+						$('.claim_input[name="id' + key + '"]').addClass('inp_error');
+					}
+				}
+				if (data.error[1]) {
+					current_form.find('.err_text').html(data.error[1]);
+				}
+				current_form.find('.cf_error').fadeIn();
+			}
+		});
+	});
+
+	$(document).on('submit', ".voting_form", function (e) {
+		e.preventDefault();
+		incube_ajax('voting', 'json', 'send_form', $(this).serializeArray(), function (data) {
+			if (data.err) {
+				$('#voting_block_' + data.voting_id + ' .var_answers').append('<div class="voting_err">Выберите ответ</div>');
+			} else {
+				$('#voting_block_' + data.voting_id).html(data.html);
+			}
+		});
+	});
+
+	$(window).scroll(function () {
+		var header_height = $('.page-header').innerHeight() + 10;
+		if ($(window).scrollTop() >= header_height) {
+			$('.fixed_header').addClass('active');
+		} else {
+			if ($('.fixed_header').hasClass('active')) {
+				$('.sr_box').eq(1).empty().hide();
+				$('.search_wrap .search').eq(1).val('');
+			}
+			$('.fixed_header').removeClass('active');
+		}
+	});
+
+	$(document).on('change', '#select_city', function () {
+		$('div[id^=phone]').hide();
+		$('#phone' + $(this).val()).show();
+		$('#phonefooter' + $(this).val()).show();
+	});
+
+	$(document).on('click', '#select_city option', function () {
+		$('.select_city_but span').html($(this).html());
+	});
+
+	$(document).on('click', '.for_file', function (e) {
+		$(this).closest('.field_line').find('input[type="file"]').trigger('click');
+	});
+
+	$(document).on('change', '.ajax_claim input[type="file"], .ajax_static input[type="file"]', function (e) {
+		var file_api = (window.File && window.FileReader && window.FileList && window.Blob) ? true : false;
+		var file_name;
+		var inp = $(this);
+		var lbl = $(this).siblings('.file_box').find('.file_name');
+		if (file_api && inp[0].files[0])
+			file_name = inp[0].files[0].name;
+		else
+			file_name = inp.val().replace("C:\\fakepath\\", '');
+
+		if (!file_name.length)
+			return;
+
+		lbl.text(file_name);
+	});
+});
+
+function claim_form_open(cid) {
+	$('.cf_ok').hide();
+	$('.form_content').show();
+	$('.claim_input[type="text"], .claim_input[type="email"]').val(' ');
+	$('.claim_input').removeClass('inp_error');
+	$('.cf_error').hide();
+	$('input.claim_phone').inputmask({
+		"mask": "+7 (999) 999-99-99",
+		clearMaskOnLostFocus: false
+	});
+	$.fancybox.open({
+		'href': '#' + $(".ajax_claim[cid='" + cid + "']").attr('id'),
+		'padding': 0,
+		'wrapCSS': 'fform',
+		scrolling: false,
+		autoResize: true,
+		fitToView: false,
+		helpers: {
+			overlay: {
+				locked: false
+			}
+		}
+	});
+}
+
+function create_map(wrap_id, x, y, text) {
+	ymaps.ready(function () {
+		var myMap = new ymaps.Map(wrap_id, {
+			center: [x, y],
+			zoom: 16,
+			controls: []
+		});
+		myMap.behaviors.disable('scrollZoom');
+		var myPlacemark = new ymaps.Placemark(myMap.getCenter(), {
+			balloonContentBody: [
+				'<address>',
+				text,
+				'</address>'
+			].join('')
+		}, {
+			preset: 'islands#redDotIcon'
+		});
+		myMap.geoObjects.add(myPlacemark);
+	});
+}

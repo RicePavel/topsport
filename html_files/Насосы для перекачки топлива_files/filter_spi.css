@@ -1,0 +1,111 @@
+.filter-spi {
+    /*margin-bottom: 20px;*/
+    background-color: #f15a29;
+}
+.filter-spi-i {
+    padding: 5px 0;
+}
+/* .filter-spi-i .name {
+    font-size: 16px;
+    color: #000;
+    font-weight: 300;
+    line-height: 18px;
+    position: relative;
+    text-transform: uppercase;
+    font-family: TradeGothicProCyr;
+    letter-spacing: 1.2px;
+} */
+.filter-spi-i>.name {
+    margin-right: 75px;
+} 
+.filter-spi-i .item {
+    display: inline-block;
+}
+.filter-spi-i .item select,
+.filter-spi-i .jq-selectbox__select {
+    padding: 7px 10px !important;
+    font-size: 14px;
+    width: 190px;
+    border-radius: 2px;
+    border: none;
+    height: 32px !important;
+}
+.filter-spi-i .jq-selectbox__select{
+    height: auto;
+    background-color: #fff;
+    color: #333;
+    width: 290px;
+    cursor: text;
+    background-image: url(/d/img/search_new.png) !important;
+    background-position: 5px center !important;
+    padding-left: 25px !important;
+    background-repeat: no-repeat !important;
+}
+.filter-spi-i .item select[disabled] {
+    opacity: 0.5;
+}
+.filter-spi-i .i-right{
+    float: right;
+}
+.filter-spi-i .i-select+.i-select {
+    margin-left: 50px;
+}
+.filter-spi-i .jq-selectbox li.disabled{
+    display: none;
+}
+.filter-spi-i .jq-selectbox__dropdown {
+    top: 0 !important;
+    margin: 0 !important;
+    border: none !important;
+    height: 32px;
+    border-radius: 2px !important;
+    overflow: hidden;
+}
+.filter-spi-i .jq-selectbox__search {
+    margin: 0 !important;
+}
+.filter-spi-i .jq-selectbox__trigger {
+    display: none;
+}
+.filter-spi-i .jq-selectbox__search input {
+    padding: 7px 10px 7px 25px !important;
+    font-size: 14px !important;
+    border: none;
+    color: #333;
+    background-image: url(/d/img/search_new.png);
+    background-position: 5px center;
+    background-repeat: no-repeat;
+}
+.filter-spi-i .hide-ul .jq-selectbox__dropdown ul {
+    display: none !important;
+}
+#filter-spi-brands{
+    width: 190px;
+}
+#filter-spi-year{
+    width: 140px;
+}
+#filter-spi-model {
+    width: 282px;
+}
+.filter-spi-i .item.clear-spi-filter {
+    margin: 0 0 0 5px;
+    width: 24px;
+    height: 32px;
+    text-align: center;
+    color: #f8ac94;
+}
+.filter-spi-i .item.clear-spi-filter.a {
+    color: #fff;
+    cursor: pointer;
+    opacity: 0.85;
+}
+.filter-spi-i .item.clear-spi-filter.a:hover {
+    opacity: 1;
+}
+.filter-spi-i .item.clear-spi-filter:after {
+    content: '\f00d';
+    font-family: FontAwesome;
+    font-size: 18px;
+    line-height: 32px;
+}

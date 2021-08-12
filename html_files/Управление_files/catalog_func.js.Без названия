@@ -1,0 +1,130 @@
+$(function () {
+	$(document).on("click", '.product-row.blocked .pr-item', function (e) {
+		e.preventDefault();
+		var t = $(this);
+		var show = $(this).attr('data-showproduct');
+		var previewDiv = $('#productPreview');
+		var headerHeight = $('.header').height(); //250;	//высота шапки+30 отступ
+		var rowHeader = $('.product-list-header').innerHeight();
+		var pos = t.offset().top;
+		var row = false;
+		var last = false;
+		var params = {};
+		params['product'] = t.attr('data-id');
+		var cacheX_id = t.attr('data-cacheX-id');
+		if (cacheX_id) {
+			params['cacheX_id'] = cacheX_id;
+		}
+		params['cart_name'] = $('#cart_name').val();
+		$('.pr-item').each(function (i, item) {
+			tt = $(this).offset().top;
+			if (tt > pos) {
+				last = item.id;
+				return false
+			} else {
+				if ((!previewDiv.is(':visible')) || (previewDiv.is(':visible') && (pos + t.height() - 1 < previewDiv.offset().top || previewDiv.offset().top < tt))) {
+					row = item.id;
+				}
+			}
+		});
+		if (show == 0) {
+			if (!row) {
+				$('#productPreload').removeClass('hide');
+			}
+			incube_ajax('catalog', 'html', 'get_product', params, function (response) {
+				$('.pr-item').attr('data-showproduct', 0).removeClass('active');
+				$('.productPreview').html('Подробнее');
+				if (response) {
+					$('.product-row').removeAttr('style');
+					$('#models .modal-body').html('');
+					if (row) {
+						previewDiv.slideUp('fast', function () {
+							pos = t.offset().top;
+							$('#' + row).after(previewDiv);
+							$('html, body').stop().animate({
+								scrollTop: (pos - headerHeight + rowHeader)
+							}, {
+								duration: 400,
+								complete: function () {
+									$('.productPreview', t).html('Скрыть');
+									t.attr('data-showproduct', '1').addClass('active');
+									previewDiv.html(response).slideDown();
+									fancy_start();
+								}
+							});
+						});
+					} else {
+						$('.productPreview', t).html('Скрыть');
+						t.attr('data-showproduct', '1').addClass('active');
+						previewDiv.html(response);
+						fancy_start();
+					}
+				} else {
+					$('.productPreview').html('Скрыть');
+					t.attr('data-showproduct', 0).removeClass('active');
+					previewDiv.slideUp('fast', function () {
+						$(this).html('')
+					});
+					$('.product-row').removeAttr('style');
+				}
+			});
+		} else {
+			$('.productPreview').html('Подробнее');
+			t.attr('data-showproduct', 0).removeClass('active');
+			previewDiv.slideUp('fast', function () {
+				$(this).html('')
+			});
+			$('.product-row').removeAttr('style');
+		}
+	});
+	$(document).on("click", '.closePreview', function () {
+		$('#productPreview').slideUp();
+		$('.productPreview,.pr-item').attr('data-showproduct', 0).removeClass('active');
+		$('.productPreview').html('Подробнее');
+		$('.product-row').removeAttr('style');
+	});
+	$(document).on('click', '.cart_tovar_add[data-custom]', function () {
+		var id = $(this).attr('data-id');
+		var qty = (!$(this).parent().hasClass('in_cart')) ? $(this).attr('data-qty') : 0;
+		var cart_name = $(this).attr('data-cart_name');
+		cart.tovar_add(id, qty, cart_name);
+	});
+
+	$(document).on('click', '.product_big_image', function () {
+		$.fancybox.open(fancy_gallery, {}, $(this).attr('data-index'));
+	});
+	$(document).on('click', '.product_info .item.manufacturer .value span', function () {
+		var p = $(this).closest('.product_options');
+		var brand = $(this).attr('data-brand');
+		if ($(this).hasClass('a')) {
+			$('.item .value span', p).removeClass('a na');
+		} else {
+			$('.item .value span', p).removeClass('a').addClass('na');
+			$(this).addClass('a').removeClass('na');
+			$('.item .value span.' + brand, p).addClass('a').removeClass('na');
+		}
+	});
+	$(document).on('click', '.models_link', function () {
+		var art = $(this).attr('data-articul');
+		incube_ajax('filter_spi', 'json', 'item_models', {'articul': art}, function (response) {
+			if (response) {
+				var cont = $('#models_list'+art);
+				cont.html(response.html)
+				$('#models .modal-body').html(cont.html());
+				
+				$('#models').modal();
+				$('#models').on('shown.bs.modal', function () {
+					$('#models .models_search').val('').focus();
+					$('#models .modal-body').scrollTop(0);
+				}) ;
+				draw_modals('models');
+			}
+		});
+	});
+});
+
+function filterSearch() {
+	$('#search_val').val($('#search').val());
+	$('#page_loader').show();
+	$('#filterCatalogForm').submit();
+}

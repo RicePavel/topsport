@@ -1,0 +1,23 @@
+function incube_ajax(block, data_type, action, params, success_func, error_func) {
+	$.ajax({
+		type: "POST",
+		url: '/ajax.php?block=' + block + '&action=' + action + '&data_type=' + data_type,
+		data: params,
+		dataType: data_type,
+		success: success_func,
+		error: error_func
+	});
+}
+
+function incube_file_ajax(block, data_type, action, params, success_func, error_func) {
+	$.ajax({
+		type: "POST",
+		url: '/ajax.php?block=' + block + '&action=' + action + '&data_type=' + data_type,
+		data: params,
+		dataType: data_type,
+		processData: false,
+		contentType: false,
+		success: success_func,
+		error: error_func
+	});
+}

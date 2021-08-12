@@ -1,0 +1,24 @@
+$(function () {
+	resp_cont = $('#response_info');
+	$(document).on('click', '#wish_send', function () {
+		resp_cont.removeClass('ok').hide();
+		wish = $('#wish_text').val();
+		if (wish.length > 3) {
+			incube_ajax('ajax', 'json', 'send_wish', {'wish_text': wish}, function (response) {
+				if (response.ok) {
+					$('#wish_text').val('');
+					resp_cont.addClass('ok');
+				}
+				resp_cont.html(response.response).show();
+			});
+		} else {
+			resp_cont.html('Слишком короткий текст').show();
+		}
+	});
+	$(document).on('click', '#cancel_send', function () {
+		$('#wish_form').modal('toggle');
+	});
+	$('#wish_form').on("hide.bs.modal", function () {
+		resp_cont.removeClass('ok').html('').hide();
+	});
+});
